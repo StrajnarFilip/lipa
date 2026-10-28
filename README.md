@@ -1,159 +1,220 @@
-# Lipa — Slovene voice harness
+# Lipa
 
-A local browser voice client that delegates work to a dedicated **Codex desktop chat**,
-using GPT-6.1 Sol at `xhigh`. Native Codex Voice handles Slovenian speech.
-It uses the existing **ChatGPT login and plan allowance**, without an API-key fallback.
+**Glasovni pomočnik za pogovor v slovenščini in temeljito delo v ozadju s Codexom.**
 
-## Run
+Slovenščina · [English](README.en.md) · [Apache 2.0](LICENSE) · [Poročilo o preverjanju](VALIDATION.md)
 
-The Python environment has already been installed in this workspace:
+Lipa poveže izvorni glasovni vmesnik Codex z ločenim pogovorom v namizni aplikaciji.
+Ti govoriš, Codex pa lahko medtem raziskuje splet, uporablja brskalnik, izvaja ukaze
+in ureja datoteke. Za zahtevnejše naloge uporablja **GPT-6.1 Sol z nastavitvijo `xhigh`**.
+Govor lahko prekineš in dodaš popravek, ne da bi s tem ustavil delo v ozadju.
 
-```bash
-./run.sh
+Uporablja obstoječo prijavo ChatGPT. Ne potrebuje ločenih ključev API za govor ali
+sklepanje in ob napaki ne preklopi na drugega plačljivega ponudnika.
+
+> **Eksperimentalna izvedba za Linux.** Preverjena je bila na Fedori z
+> `codex-cli 0.164.0-alpha.11.1`. Glasovni protokol in povezava z namizno aplikacijo
+> sta eksperimentalna; po posodobitvi Codexa bo morda treba prilagoditi povezovalnik.
+
+## Kaj omogoča
+
+- Govorni vnos in odgovore v slovenščini, sproten prepis ter tipkane popravke.
+- Temeljit razmislek v ločenem namiznem pogovoru, ki ohrani kontekst med nalogami.
+- Uporabo obstoječih orodij Codex: brskalnika, spletnega iskanja, ukazov, datotek in vtičnikov.
+- Prikaz napredka, uporabljenih orodij ter dejanskega modela in ravni razmisleka.
+- Ločena dejanja za utišanje mikrofona, prekinitev govora in preklic naloge.
+- Lokalno shranjevanje pogovora ter ponovno povezavo brez samodejnega ponavljanja nalog.
+
+## Kaj potrebuješ
+
+| Zahteva | Podrobnosti |
+| --- | --- |
+| Linux z namizno aplikacijo Codex/ChatGPT | Privzete poti ustrezajo preverjeni namestitvi na Fedori. Aplikacija mora biti odprta in prijavljena. |
+| Dostop prek računa ChatGPT | Račun mora omogočati izvorni glasovni vmesnik in `gpt-6.1-sol` z ravnijo `xhigh`. Lipa ne izbere nadomestnega modela. |
+| Ukaz `codex` v `PATH` | Potreben je za glasovni proces `app-server`. Sama namestitev CLI ne zadošča za namizna orodja. |
+| Python 3.11 ali novejši | Z moduloma `venv` in `ensurepip`. |
+| Brskalnik z WebRTC in mikrofon | Preverjeno s Chromom. Za prvi preizkus so priporočljive slušalke. |
+
+Ločena namestitev Node.js ali gradnja uporabniškega vmesnika za zagon nista potrebni.
+Lokalni strežnik uporablja FastAPI/Uvicorn, vmesnik pa navaden HTML, CSS in JavaScript.
+
+## Hiter začetek
+
+1. Odpri namizno aplikacijo Codex/ChatGPT in se prijavi.
+2. V terminalu preveri CLI in njegovo prijavo:
+
+   ```bash
+   codex --version
+   codex login
+   ```
+
+   Navodila za namestitev so v [dokumentaciji Codex CLI](https://learn.chatgpt.com/docs/cli).
+
+3. Prenesi in zaženi Lipo:
+
+   ```bash
+   git clone https://github.com/StrajnarFilip/lipa.git
+   cd lipa
+   ./setup.sh
+   ./run.sh
+   ```
+
+4. Odpri **[http://127.0.0.1:8765](http://127.0.0.1:8765)**, izberi **Začni pogovor**
+   in dovoli uporabo mikrofona. Lahko tudi takoj napišeš sporočilo.
+
+Ob prvi vsebinski zahtevi Lipa ustvari pogovor **Lipa desktop worker** v namizni
+aplikaciji. Naslednje naloge pošilja v isti pogovor. Gumb **Odpri nalogo v Codex**
+odpre njegova orodja, rezultate in zahteve za dovoljenja.
+
+Pri naslednjem zagonu zadošča `./run.sh`. Namizna aplikacija mora ostati odprta.
+Druga vrata lahko izbereš z `./run.sh --port 8766`.
+
+## Pogovor in delo v ozadju
+
+| Dejanje ali izgovorjeni ukaz | Kaj se zgodi |
+| --- | --- |
+| **Začni pogovor** | Vzpostavi glasovno povezavo in vključi mikrofon. |
+| **Premisli temeljito …** | Izrecno pošlje zahtevo namiznemu modelu Sol `xhigh`; med delom usmeri aktivno nalogo. Enako omogoča gumb ob polju za sporočilo. |
+| **Popravek: …** | Doda spremembo aktivni nalogi. Tudi tipkano sporočilo med delom usmeri trenutno nalogo. |
+| Prekinitev govora | Ustavi predvajanje odgovora; delo v ozadju ostane aktivno. |
+| Utišanje mikrofona | Ustavi govorni vnos; predvajanje in delo v ozadju ostaneta aktivna. |
+| **Nadaljuj** | Glasovnemu pomočniku naroči nadaljevanje prekinjenega odgovora. |
+| **Prekliči nalogo** | Zahteva prekinitev dela in čiščenje njegovih terminalskih procesov; vmesnik počaka na potrditev. |
+| **Končaj pogovor** | Konča glasovno sejo, aktivna namizna naloga pa lahko nadaljuje delo. |
+| **Ponovno poveži** | Obnovi spremljanje namizne naloge; zahteve ne pošlje ponovno. |
+
+V polju za sporočilo **Enter** pošlje besedilo, **Shift + Enter** pa doda novo vrstico.
+Običajen kratek pogovor lahko teče tudi med zahtevnejšim delom. Za jasno usmeritev
+aktivne naloge začni s »Popravek« ali »Premisli temeljito«.
+
+Primeri:
+
+```text
+Premisli temeljito. Na Amazon.de poišči tri USB-C priklopne postaje do 100 evrov.
+Primerjaj priključke in dodaj povezave do izdelkov.
+
+Popravek: priklopna postaja mora podpirati dva zunanja zaslona.
+
+Premisli temeljito. Preglej ta projekt, poišči vzrok napake in preveri popravek.
 ```
 
-Keep the Codex/ChatGPT desktop app open and signed in.
-Open **http://127.0.0.1:8765** in Chrome or another browser with WebRTC microphone support.
-Select **Začni pogovor** and allow microphone access. Use headphones initially to avoid
-acoustic echo during interruption testing. An optional port can be passed as `./run.sh --port 8766`.
+Dovoljenja za spletna mesta, prijave in odobritve dejanj ureja **namizni Codex**.
+Če Lipa pokaže **Čakam tvojo potrditev v Codex**, odpri namizno nalogo in preglej
+zahtevo. Dostop do spletnega mesta ne odpravi morebitne prijave ali preverjanja CAPTCHA.
+Preklic ne razveljavi dejanj, ki so bila že izvedena.
 
-For a fresh checkout, install Codex CLI, sign in using `codex login`, and run `./setup.sh`.
-Setup requires Python 3.11+ with `venv`/`ensurepip`. Set `VOICE_PYTHON` to another Python
-executable if the system installation lacks them. No Node build is needed to run the app.
+## Kako deluje
 
-## Using it
+| Del | Vloga |
+| --- | --- |
+| Brskalniški vmesnik | Mikrofon, predvajanje zvoka, prepis, tipkanje in upravljanje nalog. |
+| Izvorni Codex Voice | Prepoznavanje govora, sproten pogovor in izgovarjanje odgovorov prek WebRTC. |
+| Lokalni strežnik Lipa | Združevanje govornih odlomkov, usmerjanje zahtev, stanje seje in dostava potrjenih rezultatov. |
+| Namizni pogovor Codex | Sol `xhigh`, orodja, dovoljenja in izvajanje dela. |
 
-- Speak Slovenian naturally. **Premisli temeljito** explicitly requests delegated reasoning.
-- Type a request or correction in the message field. Enter sends; Shift+Enter adds a line.
-- The **Premisli temeljito** button submits the message field directly to Sol `xhigh`.
-- The microphone button mutes input. It does not cancel a reasoning task.
-- Interrupt speech to add a detail or ask a side question; say **Nadaljuj** to continue.
-- **Prekliči nalogo** or the task cancellation button requests cancellation. The UI waits
-  for the backend's interrupted status before claiming cancellation succeeded.
-- **Končaj pogovor** stops metered voice but leaves any active reasoning task running.
+Glasovna seja ima lasten proces `app-server`; delo prevzame ločen pogovor v namizni
+aplikaciji. Lipa uporablja njen priloženi `codex-app-tools` MCP in zasebni protokol
+za spremljanje, usmerjanje in prekinjanje pogovorov. Orodij za upravljanje brskalnika
+ne izvaja znova v lastni kodi.
 
-Task status, tool activity, progress, and the actual desktop model/effort are shown beside
-the transcript. Ordinary dialogue is handled by native voice; substantive work is delegated
-to a dedicated desktop chat. The first request creates that chat; subsequent requests reuse it.
-Use **Odpri nalogo v Codex** to view its tools, results, and permission prompts. Approvals
-and sign-ins remain in Codex. A waiting task is labelled **Čakam tvojo potrditev v Codex**.
-The desktop chat uses its normal workspace and approval settings; Lipa does not grant
-blanket access to the entire machine or bypass site permissions.
-The harness routes the spoken deep command directly, without relying on the voice model to
-request delegation. New substantive spoken requests also go to Sol; while a task runs, explicit
-deep requests and corrections steer it and native voice handles brief side conversation.
-There is no additional fast text model in this first iteration.
+## Nastavitve
 
-Native V3 can split a spoken question across transcript items and keep them open until later.
-The harness groups user fragments while the microphone detects speech, then waits for 900 ms
-without a transcript update. If more of the same utterance arrives, it steers the existing task;
-a later canonical commit does not submit it again. Long pauses mid-sentence can start reasoning
-early, so continue speaking to supply the rest as a correction.
+Privzete nastavitve so namenjene enemu uporabniku in eni aktivni glasovni seji.
+Spremenljivke okolja nastavi pred zagonom; datoteke `.env` se ne nalagajo samodejno.
 
-## Billing and native voice compatibility
+| Spremenljivka | Privzeto | Namen |
+| --- | --- | --- |
+| `VOICE_STATE_DIR` | `.state` v mapi projekta | Mapa s shranjenim stanjem Lipe. |
+| `VOICE_CODEX_RESOURCES` | `/usr/lib/chatgpt/resources` | Mapa namizne aplikacije s priloženim Node in `codex-app-tools`. |
+| `VOICE_DESKTOP_IPC` | `$CODEX_HOME/ipc/ipc.sock` oziroma `~/.codex/ipc/ipc.sock` | Lokalna vtičnica za spremljanje in upravljanje pogovora. |
+| `VOICE_DESKTOP_PIPE` | Vrednost iz aplikacije ali edina zasebna vtičnica v `/tmp/codex-app-tools/` | Izrecna izbira povezave z namiznimi orodji. |
+| `VOICE_PYTHON` | `python3` | Tolmač za ustvarjanje `.venv`; velja pri `./setup.sh`. |
 
-The voice adapter starts an isolated app-server process over stdio with ChatGPT authentication forced,
-removes API keys from that child process's environment, and refuses API-key-only accounts.
-The desktop worker is requested as `gpt-6.1-sol` and `xhigh`, and its actual turn settings
-are checked before results are accepted. No separately billed executor fallback is used. The current
-installation is `codex-cli 0.164.0-alpha.11.1`.
+Primer ločenega pogovora in drugih vrat:
 
-Native voice uses the **experimental V3 WebRTC transport**. In the installed build,
-WebSocket audio rejects the same ChatGPT login with `realtime conversation requires API key auth`.
-WebRTC negotiation succeeds using this app's own `slovene_voice_harness` client identity.
-The app does not impersonate the desktop client, copy tokens into the browser, or call
-separately billed speech APIs. If native voice access fails, it surfaces that error.
+```bash
+VOICE_STATE_DIR=.state/drugi-pogovor ./run.sh --port 8766
+```
 
-Voice and reasoning share the account's plan limits; this app provides no extra allowance.
-Purchased ChatGPT credits, if configured on the account, remain governed by that account's
-billing settings. The app never purchases credits or switches to API-key billing.
+Povezovalnik sprejme le zasebne vtičnice v lasti trenutnega uporabnika. Če zazna več
+možnih povezav, zahteva izrecno pot `VOICE_DESKTOP_PIPE`. Iste namizne naloge ne
+upravljaj hkrati iz več primerkov Lipe.
 
-Official references: [app-server](https://learn.chatgpt.com/docs/app-server),
-[Voice](https://learn.chatgpt.com/docs/features/voice),
-[plan pricing](https://learn.chatgpt.com/docs/pricing).
+## Zasebnost, omejitve in poraba
 
-## State and limitations
+- Spletni strežnik posluša na `127.0.0.1`. **Sklepanje in obdelava govora uporabljata
+  storitve OpenAI; Lipa ni rešitev brez povezave.**
+- `.state/session.json` vsebuje prepis, identifikatorja glasovnega in namiznega pogovora
+  ter zadnje stanje naloge. Lipa vanj ne shranjuje prijavnih žetonov ali zvoka.
+  Codex ločeno hrani lastno zgodovino. Lokalno stanje in preizkusni posnetki so izključeni iz Gita.
+- Po prekinitvi povezave izid naloge označi kot nepotrjen. Ob ponovni povezavi preveri
+  stanje obstoječe naloge in je samodejno ne izvede znova.
+- Uporablja prijavo in omejitve računa ChatGPT. Ne poveča razpoložljive porabe, ne kupuje
+  dobroimetja in ne preklopi na obračunavanje s ključem API. Morebitno dobroimetje na
+  računu ostaja odvisno od njegovih nastavitev.
+- Izgovarjava in prepoznavanje slovenščine sta odvisna od izvornega glasovnega vmesnika.
+  Še vedno so možni napačen prepis, menjava jezika ali napačna izgovarjava.
+- Daljši premori sredi stavka lahko sprožijo prezgodnje razmišljanje. Nadaljevanje se
+  poskuša dodati kot popravek. Natančna poravnava slišanih besed z besedilom ni na voljo.
+- Trenutna izvedba omogoča brskalniška orodja in ukaze, ne pa splošnega upravljanja
+  grafičnih aplikacij namizja Linux.
 
-- `.state/session.json` saves the Codex thread identifier, transcript, and latest task state,
-  with private file permissions. It contains no credentials or audio. Codex also maintains
-  its own thread history. Set `VOICE_STATE_DIR` for a separate local conversation.
-- Restarting Lipa resumes its voice thread and reconnects to its saved desktop worker.
-  Closing Lipa stops voice, while an existing desktop task can continue in Codex.
-  Lipa reconciles the saved task with live desktop state when available. A disconnected
-  task has an unknown outcome until confirmed and is **not automatically submitted again**.
-  **Ponovno poveži** reattaches to desktop state without resubmitting work.
-- If another Codex client owns that thread's writer lock, restart preserves its history
-  in a writable continuation and saves the new thread ID. It leaves the original thread
-  intact and does not automatically continue any unfinished task or goal.
-- One browser tab owns the voice session. Closing that tab stops its voice session after
-  a short grace period. Losing the event connection closes browser audio immediately.
-- Interrupted speech is marked as only partly heard. Generated text is not proof of audio
-  delivery; word-exact playback alignment is not exposed by this adapter.
-- Slovenian is requested through native voice instructions. This is not a hard language
-  setting on an independent recognizer. Native voice can still misrecognize, switch language,
-  paraphrase, or mispronounce words. Long replies can exceed native speech limits; the full
-  backend answer remains visible if speech delivery fails.
-- Native audio is held while a newly submitted reasoning task is pending and released when
-  the completed backend answer is handed back. A side conversation can reopen native audio
-  while that task continues. This limits premature frontend answers, but does not make native
-  speech a verbatim or perfectly synchronized renderer of the backend text.
-- The desktop worker reuses Codex command execution, file tools, browser controls, search,
-  and installed integrations. Tools stay in the desktop app, with its existing permissions.
-  Amazon and other sites may still require site approval, sign-in or CAPTCHA handling.
-- Native GUI Computer Use is currently unsupported in the Linux desktop preview. Browser
-  control and shell/file access work separately; this integration does not add Linux GUI control.
-- Desktop delegation uses the installed bundled `codex-app-tools` MCP and the app’s private,
-  versioned local follower protocol. It is experimental and may need updating after app upgrades.
-  Protocol errors are surfaced; Lipa does not silently use another executor. The client
-  identifies itself as `lipa`, never as the desktop app, and never takes the worker’s writer lock.
+## Odpravljanje težav
 
-## Tests
+| Težava | Kaj preveriti |
+| --- | --- |
+| Namizni Codex ni dosegljiv | Odpri in prijavi namizno aplikacijo, nato izberi **Ponovno poveži**. Preveri poti `VOICE_CODEX_RESOURCES`, `VOICE_DESKTOP_IPC` in `VOICE_DESKTOP_PIPE`. |
+| Ukaz `codex` manjka ali prijava ni veljavna | Preveri `codex --version`, namestitev CLI in `codex login`. Prijava samo s ključem API ni podprta. |
+| Model Sol ali raven `xhigh` nista na voljo | Preveri dostop računa v Codexu. Lipa namenoma ne izbere drugega modela. |
+| Mikrofon je zavrnjen ali ni zvoka | Dovoli mikrofon za lokalno stran, preveri izbrano napravo in ponovno začni pogovor. Tipkanje ostane na voljo. |
+| Naloga čaka na dovoljenje | Izberi **Odpri nalogo v Codex** in odgovori na poziv v namizni aplikaciji. |
+| Dosežena omejitev porabe | Preveri omejitve računa v Codexu. Lipa nima rezervnega plačljivega ponudnika. |
+| Po posodobitvi se protokol ne ujema | Preveri sporočilo o napaki in združljivost namizne različice; povezovalnik bo morda potreboval prilagoditev. |
+| Ustvarjanje `.venv` ne uspe | Namesti podporo za `venv`/`ensurepip` ali uporabi `VOICE_PYTHON=/pot/do/python3 ./setup.sh`. |
+
+Ob nejasnem izidu pošiljanja najprej poglej namizni pogovor, preden nalogo pošlješ še enkrat.
+
+## Razvoj in preizkusi
+
+Samodejni preizkusi uporabljajo nadomestne protokole in ne porabljajo omejitev ChatGPT:
 
 ```bash
 .venv/bin/python -m pip install -r requirements-dev.txt
 .venv/bin/python -m pytest -q
 ```
 
-The mocked tests cover authentication, exact model/effort, interruption versus cancellation,
-steering, stale results, cancellation races, unavailable voice, usage errors, and persistence.
-
-`scripts/browser_acceptance.cjs` runs a **live test consuming ChatGPT allowance**. It requires
-Node and Playwright plus an installed Chromium/Chrome. Start the app with an isolated
-`VOICE_STATE_DIR` before running it:
+Živi preizkus uporablja pravi glasovni vmesnik in Codex ter **porablja omejitve računa**.
+Potrebuje Node.js, Playwright in nameščen Chrome/Chromium. Zaženi ga z ločenim stanjem:
 
 ```bash
-VOICE_STATE_DIR=test-results/acceptance-state ./run.sh
-# In another terminal, with Playwright installed:
-CHROME_BIN=/path/to/chrome node scripts/browser_acceptance.cjs
+# Prvi terminal
+VOICE_STATE_DIR=test-results/live-state ./run.sh --port 8766
+
+# Drugi terminal, v mapi projekta
+npm install --prefix test-results/browser-tools playwright
+VOICE_URL=http://127.0.0.1:8766 \
+PLAYWRIGHT_MODULE="$PWD/test-results/browser-tools/node_modules/playwright" \
+CHROME_BIN=/pot/do/chrome \
+node scripts/browser_acceptance.cjs
 ```
 
-The test uses a fake microphone, captures native Slovene output, and sends that recording
-back through the browser's input track to verify recognition and spoken delegation. It
-does not access the physical microphone. Reports and screenshots go to `test-results/`.
-Set `PLAYWRIGHT_MODULE` to an absolute module path if Playwright is outside Node's default
-search path. A real microphone, your dialect, pronunciation preference, and acoustic echo
-still need a personal listening check.
+Ob prvem zagonu z novim stanjem preizkus ustvari ločen namizni pogovor. Uporablja
+sintetični mikrofon ter preveri prepis, delegiranje, zvok in prikaz na manjšem zaslonu.
+Ne uporablja fizičnega mikrofona. Poročila in posnetke zaslona shrani v `test-results/`.
+Preverjene rezultate in omejitve preizkusov opisuje [VALIDATION.md](VALIDATION.md).
 
-## Layout
+| Datoteka | Vloga |
+| --- | --- |
+| `voice_harness/desktop.py` | Povezava z namiznimi nalogami in njihovim lastnikom. |
+| `voice_harness/rpc.py` | Glasovni proces Codex in protokol JSONL. |
+| `voice_harness/native_voice.py` | Prilagodilnik za izvorni glasovni vmesnik. |
+| `voice_harness/service.py` | Usmerjanje pogovora ter življenjski cikel nalog. |
+| `voice_harness/app.py` | Lokalni HTTP API in dogodki WebSocket. |
+| `voice_harness/static/` | Uporabniški vmesnik brez gradnje. |
+| `tests/` | Samodejni preizkusi usmerjanja, stanja in protokolov. |
 
-`voice_harness/desktop.py` connects to desktop task tools and live state, forwarding
-corrections and cancellation to the existing owner. `rpc.py` owns the separate voice-only
-Codex process and JSONL protocol. `native_voice.py` isolates
-the voice adapter. `service.py` owns conversation/task state. `app.py` exposes localhost
-HTTP controls and a WebSocket event feed; the frontend is static JavaScript and CSS.
+## Licenca
 
-## Desktop connection discovery
-
-On this Fedora installation, the adapter uses `/usr/lib/chatgpt/resources`,
-`~/.codex/ipc/ipc.sock`, and the current private `/tmp/codex-app-tools/*.sock`.
-It accepts only sockets owned by the current user with private permissions. The current
-app-provided socket environment variable takes priority; after reboot, a single private
-app-tools socket is discovered automatically. Run the desktop app first. If discovery is
-ambiguous, set `VOICE_DESKTOP_PIPE` explicitly; `VOICE_DESKTOP_IPC` and
-`VOICE_CODEX_RESOURCES` override the IPC socket and installed resources directory.
-No tokens are copied or stored by this bridge.
-
-The voice thread identifier and the separate `desktop_thread_id` are saved in the same
-private state file. Do not run two independent Lipa instances against the same worker
-concurrently. For testing, use isolated state and a dedicated test worker, or stop submitting
-work from the other instance.
+Copyright 2026 Filip Strajnar. Lipa je na voljo pod [licenco Apache 2.0](LICENSE).
+Storitve OpenAI in priloženi deli njihove namizne aplikacije ostajajo predmet lastnih
+pogojev in licenc; ta repozitorij jih ne vključuje.
