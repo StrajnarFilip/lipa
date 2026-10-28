@@ -1,0 +1,12 @@
+.venv/
+.state/
+__pycache__/
+.pytest_cache/
+test-results/
+*.pyc
+.env
+.env.*
+!.env.example
+native-voice*-probe.json
+*.sdp
+*.sdp.answer

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="sl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f4ef">
+  <title>Lipa · Glasovni prostor</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/style.css">
+  <script type="module" src="/static/app.js"></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a class="brand" href="/" aria-label="Lipa, domača stran"><span class="brand-mark">✳</span> lipa<span class="brand-dot">.</span></a>
+    <div class="sidebar-label">OSEBNI GLASOVNI PROSTOR</div>
+    <div class="nav-current"><span>◉</span> Pogovor <span class="nav-live">V ŽIVO</span></div>
+    <div class="sidebar-note"><span class="small-star">✧</span><p>Dobre misli<br>potrebujejo prostor.</p><small>Govori naravno. Prekini.<br>Vzemi si čas za odgovor.</small></div>
+    <div class="account-card"><span class="account-icon">C</span><div><strong>Paket ChatGPT</strong><small id="account-status">Preverjam povezavo …</small></div><span class="account-check" id="account-check">○</span></div>
+    <div class="sidebar-footer">Slovenščina <span>SL</span><p>Eksperimentalna lokalna različica · 0.1</p></div>
+  </aside>
+  <main>
+    <header><div class="breadcrumb">Tvoj prostor <span>/</span> <strong>Pogovor</strong></div><div class="connection-pill" id="connection-pill"><i></i><span id="connection-label">Povezovanje</span></div></header>
+    <section class="page-intro"><div><div class="eyebrow">POGOVOR BREZ HITENJA</div><h1>Naj misel steče.</h1><p>V slovenščini. Z dovolj časa za dober odgovor.</p></div><span class="local-tag"><i></i> Na tvojem računalniku</span></section>
+    <div class="error-banner" id="error-banner" role="alert" hidden><strong>Nekaj se je ustavilo.</strong><span id="error-text"></span><button id="dismiss-error" aria-label="Zapri obvestilo">×</button></div>
+    <section class="voice-stage" id="voice-stage">
+      <div class="stage-top"><span><i class="stage-dot"></i> GLASOVNI POGOVOR</span><span id="voice-state-label">Pripravljen, ko si ti</span></div>
+      <div class="orb-wrap" aria-hidden="true"><div class="orb-ring ring-one"></div><div class="orb-ring ring-two"></div><div class="orb"><span></span><span></span><span></span><span></span><span></span></div></div>
+      <h2 id="voice-title">Povej na glas.</h2><p id="voice-description">Začni pogovor. Lahko me prekineš kadar koli.</p>
+      <div class="voice-controls"><button class="round-button" id="mute-button" aria-label="Izklopi mikrofon" title="Izklopi mikrofon" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 10v2a7 7 0 0 0 14 0v-2M12 19v3M8 22h8"/></svg></button><button class="primary-button" id="start-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg><span>Začni pogovor</span></button><span class="session-timer" id="session-timer">00:00</span></div>
+      <div class="stage-foot"><span class="keyboard-hint">↳</span> Raje pišeš? Sporočilo lahko dodaš spodaj.</div>
+    </section>
+    <div class="workspace-grid">
+      <section class="conversation-panel">
+        <div class="panel-heading"><h3>Pogovor</h3><span class="subtle" id="transcript-count">Vse ostane povezano</span></div>
+        <div id="transcript" class="transcript" aria-live="polite" aria-relevant="additions text"><div class="empty-state" id="empty-state"><span>“</span><h4>Začniva z mislijo.</h4><p>Vprašanje, zamisel ali nekaj,<br>kar želiš bolje razumeti.</p><button class="suggestion" data-prompt="Pomagaj mi razmisliti o novi zamisli.">Pomagaj mi razmisliti o zamisli <span>↗</span></button></div></div>
+        <form id="message-form" class="composer"><label class="sr-only" for="message-input">Sporočilo ali popravek</label><textarea id="message-input" placeholder="Napiši vprašanje ali dodaj podrobnost …" rows="2" maxlength="30000"></textarea><div class="composer-bottom"><label class="deep-toggle"><input type="checkbox" id="deep-checkbox"><span>✧</span> Temeljit razmislek</label><button type="submit" class="send-button" id="send-button" aria-label="Pošlji sporočilo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 7-7 7 7M12 5v15"/></svg></button></div></form>
+        <div class="composer-caption">Enter za pošiljanje · Shift + Enter za novo vrstico</div>
+      </section>
+      <aside class="reasoning-panel"><div class="panel-heading"><h3>Prostor za razmislek</h3><span class="small-star">✧</span></div><div class="model-line"><span class="model-icon">✳</span><div><strong id="model-name">GPT-6.1 Sol</strong><small id="model-effort">Extra high · xhigh</small></div><span class="model-badge" id="model-badge">IZBRAN</span></div><div class="desktop-card" id="desktop-card"><div><strong>Codex desktop</strong><span id="desktop-status">Povezujem …</span></div><a id="desktop-link" hidden>Odpri nalogo v Codex ↗</a><p id="desktop-note">Orodja in dovoljenja upravlja Codex.</p><button id="desktop-reconnect" type="button">Ponovno poveži</button></div><div class="task-card" id="task-card"><div class="task-state"><i id="task-dot"></i><strong id="task-state">Brez aktivne naloge</strong></div><p id="task-description">Ko vprašanje potrebuje več časa, razmislek poteka v ozadju. Pogovor lahko teče naprej.</p><p id="task-progress" hidden></p><small id="task-activity" hidden></small><div class="task-result" id="task-result" hidden></div><button class="cancel-button" id="cancel-button" hidden>Prekliči nalogo</button></div><button class="deep-button" id="deep-button"><span>✧</span> Premisli temeljito <span>↗</span></button><p class="reasoning-hint">Izgovori »Premisli temeljito« ali uporabi gumb za vprašanje v polju.</p><div class="quiet-note"><span>↺</span><p><strong>Prekinitev ne izgubi niti.</strong><br>Ustavi govor, dodaj podrobnost in nadaljuj. Razmislek ostane aktiven.</p></div></aside>
+    </div>
+    <footer><span>Lipa · tvoj prostor za pogovor</span><span>Glas in razmislek uporabljata omejitve paketa ChatGPT.</span></footer>
+  </main>
+  <audio id="remote-audio" autoplay></audio>
+</body>
+</html>
