@@ -16,6 +16,10 @@ sklepanje in ob napaki ne preklopi na drugega plačljivega ponudnika.
 > `codex-cli 0.164.0-alpha.11.1`. Glasovni protokol in povezava z namizno aplikacijo
 > sta eksperimentalna; po posodobitvi Codexa bo morda treba prilagoditi povezovalnik.
 
+**Uporabljaš Windows?** Glej [navodila za Windows](docs/windows.md): poskusna namestitev
+prek WSL2/WSLg ali dostop iz Windows do Lipe na računalniku z Linuxom. Neposreden zagon
+v PowerShellu trenutno ni podprt; pot prek WSL2 še ni bila preverjena s celovitim preizkusom.
+
 ## Kaj omogoča
 
 - Govorni vnos in odgovore v slovenščini, sproten prepis ter tipkane popravke.

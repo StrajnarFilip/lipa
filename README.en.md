@@ -19,6 +19,10 @@ Lipa currently targets Linux and has been tested on Fedora. You need:
 The integration uses experimental voice and private desktop protocols. It may need
 adjustment after Codex updates. The verified CLI build is `0.164.0-alpha.11.1`.
 
+**Using Windows?** See the [Windows guide](docs/windows.en.md) for an experimental
+WSL2/WSLg setup or a Windows browser connected to a Linux host. Native PowerShell
+execution is currently unsupported, and the WSL2 route has not been tested end to end.
+
 ## Quick start
 
 ```bash
